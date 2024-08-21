@@ -1,5 +1,8 @@
 #include <ncurses.h>
 #include <iostream>
+#include <array>
+
+using namespace std;
 
 #define ESC 27
 #define ENTER 10
@@ -9,32 +12,33 @@
 #define AMPERSAND 38
 #define HASH 35
 
-int key, words, chars, charsPlus;
+int buffer_clean, words, chars, charsPlus;
 int lines = 1;
-int last_four[4] = {0,0,0,0};
-int counter;
+array<int, 4> last_four = {ENTER};
 bool running = false;
 bool menu = true;
 int row, col;
-
 
 
 int main(){
     initscr();
     keypad(stdscr, TRUE);
 
+
     //---------------- Bucle del programa----------------//
     while(menu){
 
         row = 0;
         col = 0;
-        counter = 0;
+        words = 0;
+        chars = 0;
+        charsPlus = 0;
         curs_set(0);
         clear();
         printw("> Presiona [ENTER] para comenzar.\n\n");
         printw("> Presiona [ESC] para cerrar el programa.");
 
-        key = getch();
+        int key = getch();
         switch (key)
         {
         case ENTER:
@@ -53,49 +57,57 @@ int main(){
             curs_set(1);
             move(row, col); //posiciona correctamente el texto ingresado por el usuario
 
-            while ((key = getch()) != ENTER){
+            while (true){
+                int key = getch();
+                flushinp();
                 col++;
                 move(row, col); //posiciona correctamente el texto ingresado por el usuario
 
-                if(key == ESC){
-                    endwin();
+                if(key == ESC){        
                     running = false;
                     break;
-                }else if(key == SPACE || key == TAB){
-                    if(counter > 0){
-                        if(last_four[counter-1] != SPACE && last_four[counter-1] != TAB && last_four[counter-1] != ENTER){
-                            words++;
-                        }
-                        charsPlus++;
+                }
+
+                for (int i = 0; i < 3; i++){        //Ordena los elementos del array cada vez que se ingresa un caracter nuevo
+                    last_four[i] = last_four[i+1]; 
+                }
+                last_four[3] = key;
+
+                if(key == SPACE || key == TAB || key == ENTER){         //Evita contar palabras de más cuando se presiona espacio/tab/enter mas de una vez
+                    if(last_four[2] != SPACE && last_four[2] != TAB  && last_four[2] != ENTER){
+                        words++;
                     }
+                    charsPlus++;
+                }
+
+                if(key == ENTER){
+                    break;
                 }else{
                     chars++;
                 }
-                
-                //Llena los primeros 3 caracteres ingresados
-                if (counter < 4){
-                    last_four[counter] = key;
-                    counter++;
-                //Si ya están llenos todos los espacios, empieza a desplazarlos
-                }else{
-                    for (int i = 0; i < 4; i++){
-                        if (i!=3){
-                            last_four[i] = last_four[i+1];
-                        }else{
-                            last_four[3] = key;
-                        }
-                    }
-                }
+                //------------DEBUGGING------------//
+                /*move(0, 30);
+                printw("%d %d %d %d", words,lines,chars,charsPlus);
+                move(1, 30);
+                printw("%d %d %d %d", last_four[0],last_four[1],last_four[2],last_four[3]);
+                move(row, col);*/
             }
 
-            if(last_four[1] == PLUS && last_four[2] == AMPERSAND && last_four[3] == HASH){
-                if(last_four[1] != SPACE && last_four[2] != TAB && last_four[2] != ENTER){
-                            words++;
-                }
+
+            if(last_four[0] == PLUS && last_four[1] == AMPERSAND && last_four[2] == HASH){
                 chars -=3;
+                curs_set(0);
                 move(row+1, 0);
-                printw("palabras=%d - líneas=%d - caracteres=%d - caracteresPlus=%d", words, lines, chars, charsPlus);
+                printw("palabras=%d - lineas=%d - caracteres=%d - caracteresPlus=%d", words, lines, chars, charsPlus);
+                move(row+2, 0);
             }
+
+            //------------DEBUGGING------------//
+            /*move(0, 30);
+            printw("%d %d %d %d", words,lines,chars,charsPlus);
+            move(1, 30);
+            printw("%d %d %d %d", last_four[0],last_four[1],last_four[2],last_four[3]);
+            move(row, col);*/
             row++;
             col = 0;
             charsPlus++;
