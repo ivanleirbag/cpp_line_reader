@@ -9,8 +9,9 @@
 #define AMPERSAND 38
 #define HASH 35
 
-int key, words, lines, chars, charsPlus;
-int last_three[3];
+int key, words, chars, charsPlus;
+int lines = 1;
+int last_four[4] = {0,0,0,0};
 int counter;
 bool running = false;
 bool menu = true;
@@ -27,7 +28,7 @@ int main(){
 
         row = 0;
         col = 0;
-
+        counter = 0;
         curs_set(0);
         clear();
         printw("> Presiona [ENTER] para comenzar.\n\n");
@@ -52,115 +53,55 @@ int main(){
             curs_set(1);
             move(row, col); //posiciona correctamente el texto ingresado por el usuario
 
-            //Reiniciamos el contador en 0 por cada vez que se vuelva a ingresar al programa
-            counter = 0;
             while ((key = getch()) != ENTER){
-                //Llena los primeros 3 caracteres ingresados
-                move(row, col); //posiciona correctamente el texto ingresado por el usuario
                 col++;
-                if (counter < 3){
-                    last_three[counter] = key;
+                move(row, col); //posiciona correctamente el texto ingresado por el usuario
+
+                if(key == ESC){
+                    endwin();
+                    running = false;
+                    break;
+                }else if(key == SPACE || key == TAB){
+                    if(counter > 0){
+                        if(last_four[counter-1] != SPACE && last_four[counter-1] != TAB && last_four[counter-1] != ENTER){
+                            words++;
+                        }
+                        charsPlus++;
+                    }
+                }else{
+                    chars++;
+                }
+                
+                //Llena los primeros 3 caracteres ingresados
+                if (counter < 4){
+                    last_four[counter] = key;
                     counter++;
                 //Si ya están llenos todos los espacios, empieza a desplazarlos
                 }else{
-                    for (int i = 0; i < 3; i++){
-                        if (i!=2){
-                            last_three[i] = last_three[i+1];
+                    for (int i = 0; i < 4; i++){
+                        if (i!=3){
+                            last_four[i] = last_four[i+1];
                         }else{
-                            last_three[2] = key;
+                            last_four[3] = key;
                         }
                     }
                 }
-
-                switch (key){
-                case ESC:
-                    endwin();
-                    running = false;
-                    key = ENTER;
-                    break;
-                case SPACE: 
-                    if(last_three[1] != SPACE && last_three[1] != TAB && last_three[1] != ENTER){
-                        words++;
-                    }
-                    break;
-                case TAB:
-                    if(last_three[1] != SPACE && last_three[1] != TAB && last_three[1] != ENTER){
-                        words++;
-                    }
-                    break;
-                default:
-                    chars ++;
-                    break;
-                }
             }
 
-            if(last_three[0] == PLUS && last_three[1] == AMPERSAND && last_three[2] == HASH){
-                printw("Termino");
+            if(last_four[1] == PLUS && last_four[2] == AMPERSAND && last_four[3] == HASH){
+                if(last_four[1] != SPACE && last_four[2] != TAB && last_four[2] != ENTER){
+                            words++;
+                }
+                chars -=3;
+                move(row+1, 0);
+                printw("palabras=%d - líneas=%d - caracteres=%d - caracteresPlus=%d", words, lines, chars, charsPlus);
             }
             row++;
             col = 0;
+            charsPlus++;
             lines++;
         }
     }
-        
-        /*
-        move(row, col); //posiciona correctamente el texto ingresado por el usuario
-        if (counter < 3){
-            counter++;
-        }else{
-            counter = 0;
-        }
-
-        col++;
-        //----------------Manejo del input----------------//
-        key = getch();
-        switch (key){
-        case ESC:
-            endwin();
-            running = false;
-            break;
-        case ENTER:
-            row++;
-            col = 0;
-            charsPlus++;
-            lines++;
-            words++;
-            break;
-        case SPACE:
-            charsPlus++;
-            words++;
-            break;
-        case TAB:
-            col += 3;
-            charsPlus++;
-            words++;
-            break;            
-        default:
-            chars ++;
-            break;
-        }
-
-        //----------------Guarda los últimos 3 caracteres----------------//
-        switch (counter)
-        {
-        case 0:
-            frst = key;
-            break;
-        case 1:
-            scnd = key;
-            break;
-        case 2:
-            thrd = key;
-            break;
-        default:
-            break;
-        }
-        move(30,0);
-        printw("primer=%d - segundo=%d - tercer=%d", frst, scnd, thrd);
-        if(frst==PLUS && scnd == AMPERSAND && thrd == HASH){
-            printw("palabras=%d - lineas=%d - caracteres=%d - caracteresPlus=%d", words, lines, chars, charsPlus);
-        }
-        */
     endwin();
     return 0;
 }
